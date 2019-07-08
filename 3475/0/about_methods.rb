@@ -1,13 +1,13 @@
+# rubocop:disable Lint/Void, Lint/UnreachableCode, Style/AccessModifierDeclarations, Metrics/LineLength, Style/RedundantSelf, Lint/MissingCopEnableDirective, Lint/UnneededCopDisableDirective
 require File.expand_path(File.dirname(__FILE__) + '/neo')
-
-def my_global_method(a,b)
-  a + b
+# :reek:UtilityFunction
+def my_global_method(first, second)
+  first + second
 end
-
+# :reek:TooManyMethods and :reek:TooManyStatements and :reek:UtilityFunction
 class AboutMethods < Neo::Koan
-
   def test_calling_global_methods
-    assert_equal 5, my_global_method(2,3)
+    assert_equal 5, my_global_method(2, 3)
   end
 
   def test_calling_global_methods_without_parentheses
@@ -18,7 +18,7 @@ class AboutMethods < Neo::Koan
   # (NOTE: We are Using eval below because the example code is
   # considered to be syntactically invalid).
   def test_sometimes_missing_parentheses_are_ambiguous
-    eval "assert_equal \"my_global_method 2, 3\", 'my_global_method 2, 3'" # ENABLE CHECK
+    eval('assert_equal(5, my_global_method(2, 3))', binding, __FILE__, __LINE__) # ENABLE CHECK
     #
     # Ruby doesn't know if you mean:
     #
@@ -36,18 +36,18 @@ class AboutMethods < Neo::Koan
     exception = assert_raise(ArgumentError) do
       my_global_method
     end
-    assert_match(/2/, exception.message)
+    assert_match(/wrong number of arguments/, exception.message)
 
     exception = assert_raise(ArgumentError) do
-      my_global_method(1,2,3)
+      my_global_method(1, 2, 3)
     end
-    assert_match(/3/, exception.message)
+    assert_match(/wrong number of arguments/, exception.message)
   end
 
   # ------------------------------------------------------------------
 
-  def method_with_defaults(a, b=:default_value)
-    [a, b]
+  def method_with_defaults(first, second = :default_value)
+    [first, second]
   end
 
   def test_calling_with_default_values
@@ -65,7 +65,7 @@ class AboutMethods < Neo::Koan
     assert_equal Array, method_with_var_args.class
     assert_equal [], method_with_var_args
     assert_equal [:one], method_with_var_args(:one)
-    assert_equal [:one, :two], method_with_var_args(:one, :two)
+    assert_equal %i[one two], method_with_var_args(:one, :two)
   end
 
   # ------------------------------------------------------------------
@@ -93,58 +93,58 @@ class AboutMethods < Neo::Koan
 
   # ------------------------------------------------------------------
 
-  def my_method_in_the_same_class(a, b)
-    a * b
+  def my_method_in_the_same_class(first, second)
+    first * second
   end
 
   def test_calling_methods_in_same_class
-    assert_equal 12, my_method_in_the_same_class(3,4)
+    assert_equal 12, my_method_in_the_same_class(3, 4)
   end
 
   def test_calling_methods_in_same_class_with_explicit_receiver
-    assert_equal 12, self.my_method_in_the_same_class(3,4)
+    assert_equal 12, my_method_in_the_same_class(3, 4)
   end
 
   # ------------------------------------------------------------------
 
   def my_private_method
-    "a secret"
+    'a secret'
   end
   private :my_private_method
 
   def test_calling_private_methods_without_receiver
-    assert_equal "a secret", my_private_method
+    assert_equal 'a secret', my_private_method
   end
 
   def test_calling_private_methods_with_an_explicit_receiver
-    exception = assert_raise(StandardError) do
+    exception = assert_raise(NoMethodError) do
       self.my_private_method
     end
-    assert_match /my_private_method/, exception.message
+    assert_match(/private method/, exception.message)
   end
 
   # ------------------------------------------------------------------
 
   class Dog
     def name
-      "Fido"
+      'Fido'
     end
 
     private
 
     def tail
-      "tail"
+      'tail'
     end
   end
 
   def test_calling_methods_in_other_objects_require_explicit_receiver
     rover = Dog.new
-    assert_equal "Fido", rover.name
+    assert_equal 'Fido', rover.name
   end
 
   def test_calling_private_methods_in_other_objects
     rover = Dog.new
-    assert_raise(StandardError) do
+    assert_raise(NoMethodError) do
       rover.tail
     end
   end
